@@ -41,13 +41,12 @@ jobs:
           script: |
             set -e
             mkdir -p out
+            adb shell settings put global hide_error_dialogs 1 || true
             adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell pm grant org.schabi.newpipe.debug android.permission.POST_NOTIFICATIONS || true
             adb shell am start -n org.schabi.newpipe.debug/org.schabi.newpipe.MainActivity
-            sleep 20
+            sleep 25
             adb exec-out screencap -p > out/01-trending.png
-            adb shell input tap 405 2300 || true
-            sleep 10
-            adb exec-out screencap -p > out/02-feed.png
             adb shell uiautomator dump /sdcard/window.xml || true
             adb pull /sdcard/window.xml out/window.xml || true
 
