@@ -210,6 +210,8 @@ public abstract class BaseListFragment<I, N> extends BaseStateFragment<I>
 
     /**
      * Whether stream items should use the full-width YouTube-style card layout.
+     *
+     * @return true to use the YouTube-style card layout
      */
     protected boolean useYouTubeVariant() {
         return false;
