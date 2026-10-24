@@ -10,11 +10,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:background="?attr/colorPrimary"
-        app:tabRippleColor="@color/white"
-        app:tabIconTint="@color/white"
-        app:tabIndicatorColor="@color/white"
+        android:background="?attr/toolbarBackgroundColor"
+        app:tabRippleColor="?attr/actionColor"
+        app:tabIconTint="?attr/actionColor"
+        app:tabIndicatorColor="?attr/colorAccent"
         app:tabGravity="fill"
+        app:tabTextColor="?attr/actionColor"
+        app:tabSelectedTextColor="?attr/colorAccent"
         app:tabMinWidth="60dp" />
 
     <androidx.viewpager.widget.ViewPager

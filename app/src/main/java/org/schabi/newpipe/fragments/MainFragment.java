@@ -10,7 +10,6 @@ import static com.google.android.material.tabs.TabLayout.INDICATOR_GRAVITY_TOP;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,6 +24,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapterMenuWorkaround;
@@ -90,7 +90,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         youtubeRestrictedModeEnabledKey = getString(R.string.youtube_restricted_mode_enabled);
         youtubeRestrictedModeEnabled = prefs.getBoolean(youtubeRestrictedModeEnabledKey, false);
         mainTabsPositionKey = getString(R.string.main_tabs_position_key);
-        mainTabsPositionBottom = prefs.getBoolean(mainTabsPositionKey, false);
+        mainTabsPositionBottom = prefs.getBoolean(mainTabsPositionKey, true);
     }
 
     @Override
@@ -243,17 +243,24 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         tabLayout.setLayoutParams(tabParams);
         viewPager.setLayoutParams(pagerParams);
 
-        // change the background and icon color of the tab layout:
-        // service-colored at the top, app-background-colored at the bottom
+        // YouTube-like app bar and bottom navigation colors
         tabLayout.setBackgroundColor(ThemeHelper.resolveColorFromAttr(requireContext(),
-                bottom ? android.R.attr.windowBackground : R.attr.colorPrimary));
+                R.attr.toolbarBackgroundColor));
 
-        @ColorInt final int iconColor = bottom
-                ? ThemeHelper.resolveColorFromAttr(requireContext(), android.R.attr.colorAccent)
-                : Color.WHITE;
-        tabLayout.setTabRippleColor(ColorStateList.valueOf(iconColor).withAlpha(32));
-        tabLayout.setTabIconTint(ColorStateList.valueOf(iconColor));
-        tabLayout.setSelectedTabIndicatorColor(iconColor);
+        @ColorInt final int selectedColor = ThemeHelper.resolveColorFromAttr(
+                requireContext(), android.R.attr.colorAccent);
+        @ColorInt final int unselectedColor = ColorUtils.setAlphaComponent(
+                ThemeHelper.resolveColorFromAttr(requireContext(), R.attr.actionColor), 0x99);
+
+        final ColorStateList tabTint = new ColorStateList(
+                new int[][] {new int[] {android.R.attr.state_selected}, new int[] {}},
+                new int[] {selectedColor, unselectedColor});
+        tabLayout.setTabRippleColor(ColorStateList.valueOf(selectedColor).withAlpha(32));
+        tabLayout.setTabIconTint(tabTint);
+        tabLayout.setTabTextColors(unselectedColor, selectedColor);
+        tabLayout.setSelectedTabIndicatorColor(selectedColor);
+        tabLayout.setSelectedTabIndicatorHeight(bottom ? 0
+                : (int) (3 * getResources().getDisplayMetrics().density));
     }
 
     @Override

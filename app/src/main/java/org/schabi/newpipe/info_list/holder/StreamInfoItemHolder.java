@@ -40,7 +40,7 @@ public class StreamInfoItemHolder extends StreamMiniInfoItemHolder {
     public final TextView itemAdditionalDetails;
 
     public StreamInfoItemHolder(final InfoItemBuilder infoItemBuilder, final ViewGroup parent) {
-        this(infoItemBuilder, R.layout.list_stream_item, parent);
+        this(infoItemBuilder, R.layout.list_stream_search_item, parent);
     }
 
     public StreamInfoItemHolder(final InfoItemBuilder infoItemBuilder, final int layoutId,

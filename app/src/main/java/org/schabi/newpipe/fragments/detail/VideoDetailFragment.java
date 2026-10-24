@@ -1998,10 +1998,14 @@ public final class VideoDetailFragment
             activity.getWindow().getAttributes().layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
         }
-        activity.getWindow().getDecorView().setSystemUiVisibility(0);
+        int systemUiVisibility = 0;
+        if (ThemeHelper.isLightThemeSelected(requireContext())) {
+            systemUiVisibility |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        }
+        activity.getWindow().getDecorView().setSystemUiVisibility(systemUiVisibility);
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         activity.getWindow().setStatusBarColor(ThemeHelper.resolveColorFromAttr(
-                requireContext(), android.R.attr.colorPrimary));
+                requireContext(), R.attr.toolbarBackgroundColor));
     }
 
     private void hideSystemUi() {

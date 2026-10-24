@@ -54,7 +54,7 @@ public class LocalStatisticStreamItemHolder extends LocalItemHolder {
 
     public LocalStatisticStreamItemHolder(final LocalItemBuilder itemBuilder,
                                           final ViewGroup parent) {
-        this(itemBuilder, R.layout.list_stream_item, parent);
+        this(itemBuilder, R.layout.list_stream_search_item, parent);
     }
 
     LocalStatisticStreamItemHolder(final LocalItemBuilder infoItemBuilder, final int layoutId,
