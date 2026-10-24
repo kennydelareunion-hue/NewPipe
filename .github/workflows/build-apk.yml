@@ -1,0 +1,43 @@
+name: build-apk
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+      - apk
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace -DskipFormatKtlint
+
+      - name: Show APK info
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/debug -name '*.apk' | head -1)"
+          echo "APK=$APK" >> "$GITHUB_ENV"
+          ls -lh "$APK"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: newpipe-debug
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 30
