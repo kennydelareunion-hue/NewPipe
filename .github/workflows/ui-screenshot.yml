@@ -1,0 +1,60 @@
+name: ui-screenshot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace -DskipFormatKtlint
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Capture screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: default
+          arch: x86_64
+          profile: pixel_7
+          emulator-boot-timeout: 300
+          script: |
+            set -e
+            mkdir -p out
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -n org.schabi.newpipe.debug/org.schabi.newpipe.MainActivity
+            sleep 20
+            adb exec-out screencap -p > out/01-trending.png
+            adb shell input tap 405 2300 || true
+            sleep 10
+            adb exec-out screencap -p > out/02-feed.png
+            adb shell uiautomator dump /sdcard/window.xml || true
+            adb pull /sdcard/window.xml out/window.xml || true
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-screenshots
+          path: out/
+          retention-days: 7
