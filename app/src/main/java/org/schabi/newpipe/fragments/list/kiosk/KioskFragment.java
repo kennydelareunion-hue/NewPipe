@@ -105,6 +105,11 @@ public class KioskFragment extends BaseListInfoFragment<StreamInfoItem, KioskInf
         return inflater.inflate(R.layout.fragment_kiosk, container, false);
     }
 
+    @Override
+    protected boolean useYouTubeVariant() {
+        return true;
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
     // Menu
     //////////////////////////////////////////////////////////////////////////*/

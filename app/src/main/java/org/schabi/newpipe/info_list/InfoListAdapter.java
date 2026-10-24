@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.schabi.newpipe.R;
 import org.schabi.newpipe.databinding.PignateFooterBinding;
 import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem;
@@ -86,6 +87,7 @@ public class InfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private final HistoryRecordManager recordManager;
 
     private boolean useMiniVariant = false;
+    private boolean useYouTubeVariant = false;
     private boolean showFooter = false;
 
     private ItemViewMode itemMode = ItemViewMode.LIST;
@@ -117,6 +119,10 @@ public class InfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public void setUseMiniVariant(final boolean useMiniVariant) {
         this.useMiniVariant = useMiniVariant;
+    }
+
+    public void setUseYouTubeVariant(final boolean useYouTubeVariant) {
+        this.useYouTubeVariant = useYouTubeVariant;
     }
 
     public void setItemViewMode(final ItemViewMode itemViewMode) {
@@ -297,7 +303,10 @@ public class InfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             case MINI_STREAM_HOLDER_TYPE:
                 return new StreamMiniInfoItemHolder(infoItemBuilder, parent);
             case STREAM_HOLDER_TYPE:
-                return new StreamInfoItemHolder(infoItemBuilder, parent);
+                return useYouTubeVariant
+                        ? new StreamInfoItemHolder(infoItemBuilder,
+                                R.layout.list_stream_item, parent)
+                        : new StreamInfoItemHolder(infoItemBuilder, parent);
             case GRID_STREAM_HOLDER_TYPE:
                 return new StreamGridInfoItemHolder(infoItemBuilder, parent);
             case CARD_STREAM_HOLDER_TYPE:

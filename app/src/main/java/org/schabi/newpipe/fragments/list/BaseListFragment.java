@@ -208,6 +208,13 @@ public abstract class BaseListFragment<I, N> extends BaseStateFragment<I>
         return new SuperScrollLayoutManager(activity);
     }
 
+    /**
+     * Whether stream items should use the full-width YouTube-style card layout.
+     */
+    protected boolean useYouTubeVariant() {
+        return false;
+    }
+
     protected RecyclerView.LayoutManager getGridLayoutManager() {
         final Resources resources = activity.getResources();
         int width = resources.getDimensionPixelSize(R.dimen.video_item_grid_thumbnail_image_width);
@@ -234,6 +241,7 @@ public abstract class BaseListFragment<I, N> extends BaseStateFragment<I>
         super.initViews(rootView, savedInstanceState);
 
         itemsList = rootView.findViewById(R.id.items_list);
+        infoListAdapter.setUseYouTubeVariant(useYouTubeVariant());
         refreshItemViewMode();
 
         final Supplier<View> listHeaderSupplier = getListHeaderSupplier();
