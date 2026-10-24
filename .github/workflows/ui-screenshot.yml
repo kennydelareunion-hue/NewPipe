@@ -46,9 +46,11 @@ jobs:
             adb shell pm grant org.schabi.newpipe.debug android.permission.POST_NOTIFICATIONS || true
             adb shell am start -n org.schabi.newpipe.debug/org.schabi.newpipe.MainActivity
             sleep 25
-            adb exec-out screencap -p > out/01-trending.png
             adb shell uiautomator dump /sdcard/window.xml || true
             adb pull /sdcard/window.xml out/window.xml || true
+            python3 .github/scripts/dismiss_anr.py
+            sleep 3
+            adb exec-out screencap -p > out/01-trending.png
 
       - name: Upload screenshots
         if: always()
