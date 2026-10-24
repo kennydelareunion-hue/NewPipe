@@ -210,6 +210,8 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
                 final Tab tab = tabsList.get(i);
                 tabToSet.setIcon(tab.getTabIconRes(requireContext()));
                 tabToSet.setContentDescription(tab.getTabName(requireContext()));
+                tabToSet.setText(mainTabsPositionBottom
+                        ? tab.getTabName(requireContext()) : null);
             }
         }
     }
@@ -261,6 +263,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         tabLayout.setSelectedTabIndicatorColor(selectedColor);
         tabLayout.setSelectedTabIndicatorHeight(bottom ? 0
                 : (int) (3 * getResources().getDisplayMetrics().density));
+        updateTabsIconAndDescription();
     }
 
     @Override
