@@ -17,6 +17,7 @@
         app:tabGravity="fill"
         app:tabTextColor="?attr/actionColor"
         app:tabSelectedTextColor="?attr/colorAccent"
+        app:tabTextAppearance="@style/BottomTabTextAppearance"
         app:tabMinWidth="60dp" />
 
     <androidx.viewpager.widget.ViewPager
