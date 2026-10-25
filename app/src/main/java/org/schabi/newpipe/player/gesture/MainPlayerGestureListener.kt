@@ -2,6 +2,7 @@ package org.schabi.newpipe.player.gesture
 
 import android.util.Log
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.View.OnTouchListener
 import android.widget.ProgressBar
@@ -31,7 +32,32 @@ class MainPlayerGestureListener(
 ) : BasePlayerGestureListener(playerUi), OnTouchListener {
     private var isMoving = false
 
+    /**
+     * Pinch-to-zoom on the video, only in fullscreen mode.
+     *
+     * <p>Scaling the surface view keeps the video covering the whole screen, which is what
+     * vertical videos (Shorts) need to never display black bars.</p>
+     */
+    private val scaleDetector = ScaleGestureDetector(
+        player.context,
+        object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                if (!playerUi.isFullscreen) {
+                    return false
+                }
+                val surfaceView = binding.surfaceView
+                surfaceView.setUserScale(surfaceView.userScale * detector.scaleFactor)
+                return true
+            }
+        }
+    )
+
     override fun onTouch(v: View, event: MotionEvent): Boolean {
+        if (event.pointerCount > 1 || scaleDetector.isInProgress) {
+            scaleDetector.onTouchEvent(event)
+            return true
+        }
+
         super.onTouch(v, event)
         if (event.action == MotionEvent.ACTION_UP && isMoving) {
             isMoving = false

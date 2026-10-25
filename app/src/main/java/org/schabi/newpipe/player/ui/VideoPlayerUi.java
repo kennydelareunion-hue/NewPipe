@@ -1616,6 +1616,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
     }
 
     void onResizeClicked() {
+        binding.surfaceView.setUserScale(1.0f);
         setResizeMode(nextResizeModeAndSaveToPrefs(player, binding.surfaceView.getResizeMode()));
     }
 

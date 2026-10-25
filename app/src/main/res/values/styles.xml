@@ -14,8 +14,21 @@
     <style name="OpeningTheme" parent="Base.OpeningTheme" />
 
     <style name="BottomTabTextAppearance" parent="TextAppearance.Design.Tab">
-        <item name="android:textSize">10sp</item>
+        <item name="android:textSize">9sp</item>
+        <item name="textAllCaps">false</item>
         <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="NewPipeRoundedThumbnail">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
+    <style name="NewPipeRoundedThumbnailSmall">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
     </style>
 
     <!-- Base Theme -->

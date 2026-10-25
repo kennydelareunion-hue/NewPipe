@@ -1,6 +1,7 @@
 package org.schabi.newpipe.info_list.holder;
 
 import android.text.TextUtils;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
@@ -38,6 +39,7 @@ import org.schabi.newpipe.util.Localization;
 
 public class StreamInfoItemHolder extends StreamMiniInfoItemHolder {
     public final TextView itemAdditionalDetails;
+    private final int layoutId;
 
     public StreamInfoItemHolder(final InfoItemBuilder infoItemBuilder, final ViewGroup parent) {
         this(infoItemBuilder, R.layout.list_stream_search_item, parent);
@@ -46,6 +48,7 @@ public class StreamInfoItemHolder extends StreamMiniInfoItemHolder {
     public StreamInfoItemHolder(final InfoItemBuilder infoItemBuilder, final int layoutId,
                                 final ViewGroup parent) {
         super(infoItemBuilder, layoutId, parent);
+        this.layoutId = layoutId;
         itemAdditionalDetails = itemView.findViewById(R.id.itemAdditionalDetails);
     }
 
@@ -58,8 +61,17 @@ public class StreamInfoItemHolder extends StreamMiniInfoItemHolder {
             return;
         }
         final StreamInfoItem item = (StreamInfoItem) infoItem;
+        final String details = getStreamInfoDetailLine(item);
 
-        itemAdditionalDetails.setText(getStreamInfoDetailLine(item));
+        if (layoutId == R.layout.list_stream_item) {
+            // YouTube-like single metadata line: channel, views and date
+            itemUploaderView.setText(Localization.concatenateStrings(
+                    item.getUploaderName(), details));
+            itemAdditionalDetails.setVisibility(View.GONE);
+        } else {
+            itemAdditionalDetails.setText(details);
+            itemAdditionalDetails.setVisibility(View.VISIBLE);
+        }
     }
 
     private String getStreamInfoDetailLine(final StreamInfoItem infoItem) {

@@ -7,18 +7,22 @@
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:paddingTop="8dp">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/itemThumbnailView"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
         android:scaleType="centerCrop"
         android:src="@drawable/placeholder_thumbnail_video"
         app:layout_constraintDimensionRatio="16:9"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearance="@style/NewPipeRoundedThumbnail" />
 
     <org.schabi.newpipe.views.NewPipeTextView
         android:id="@+id/itemDurationView"
@@ -26,9 +30,9 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:background="@color/duration_background_color"
-        android:paddingHorizontal="5dp"
-        android:paddingVertical="1dp"
+        android:background="@drawable/bg_duration_badge"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/duration_text_color"
         android:textSize="12sp"
@@ -51,7 +55,7 @@
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:background="@drawable/bg_avatar"
         android:padding="7dp"
         android:src="@drawable/ic_person"
@@ -65,13 +69,14 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="12dp"
         android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
         android:maxLines="2"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textColor="?android:attr/textColorPrimary"
-        android:textSize="16sp"
+        android:textSize="15sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/itemAvatarView"
         app:layout_constraintTop_toBottomOf="@id/itemThumbnailView"
@@ -81,16 +86,18 @@
         android:id="@+id/itemUploaderView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="14dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="?android:attr/textColorSecondary"
-        android:textSize="13sp"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@id/itemVideoTitleView"
         app:layout_constraintStart_toStartOf="@id/itemVideoTitleView"
         app:layout_constraintTop_toBottomOf="@id/itemVideoTitleView"
-        tools:text="Chaîne YouTube" />
+        tools:text="Chaîne YouTube • 1,2 M de vues • il y a 2 jours" />
 
     <org.schabi.newpipe.views.NewPipeTextView
         android:id="@+id/itemAdditionalDetails"
@@ -103,10 +110,12 @@
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="?android:attr/textColorSecondary"
         android:textSize="12sp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@id/itemVideoTitleView"
         app:layout_constraintStart_toStartOf="@id/itemVideoTitleView"
         app:layout_constraintTop_toBottomOf="@id/itemUploaderView"
-        tools:text="1,2 M de vues • il y a 2 jours" />
+        tools:text="1,2 M de vues • il y a 2 jours"
+        tools:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

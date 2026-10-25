@@ -16,6 +16,7 @@ public class ExpandableSurfaceView extends SurfaceView {
     private float videoAspectRatio = 0.0f;
     private float scaleX = 1.0f;
     private float scaleY = 1.0f;
+    private float userScale = 1.0f;
 
     public ExpandableSurfaceView(final Context context, final AttributeSet attrs) {
         super(context, attrs);
@@ -68,8 +69,37 @@ public class ExpandableSurfaceView extends SurfaceView {
     @Override
     protected void onLayout(final boolean changed,
                             final int left, final int top, final int right, final int bottom) {
-        setScaleX(scaleX);
-        setScaleY(scaleY);
+        applyScale();
+    }
+
+    private void applyScale() {
+        setScaleX(scaleX * userScale);
+        setScaleY(scaleY * userScale);
+    }
+
+    /**
+     * Set an additional user zoom on top of the resize mode scaling.
+     *
+     * <p>The scale is clamped between 1 (no zoom) and 3 (maximum zoom), so the video always
+     * covers the whole view and never shows black bars.</p>
+     *
+     * @param scale the requested scale
+     */
+    public void setUserScale(final float scale) {
+        final float newScale = Math.max(1.0f, Math.min(scale, 3.0f));
+        if (userScale == newScale) {
+            return;
+        }
+
+        userScale = newScale;
+        applyScale();
+    }
+
+    /**
+     * @return the current user zoom applied on top of the resize mode scaling
+     */
+    public float getUserScale() {
+        return userScale;
     }
 
     /**

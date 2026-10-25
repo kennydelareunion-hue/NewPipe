@@ -42,6 +42,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.SubtitleView;
 import com.google.android.exoplayer2.video.VideoSize;
 
@@ -894,7 +895,17 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
     @Override
     public void onVideoSizeChanged(@NonNull final VideoSize videoSize) {
         super.onVideoSizeChanged(videoSize);
+        final boolean wasVerticalVideo = isVerticalVideo;
         isVerticalVideo = videoSize.width < videoSize.height;
+
+        if (wasVerticalVideo != isVerticalVideo) {
+            binding.surfaceView.setUserScale(1.0f);
+        }
+
+        if (isFullscreen && isVerticalVideo) {
+            // Vertical videos (Shorts) must fill the whole screen in fullscreen mode
+            setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+        }
 
         if (globalScreenOrientationLocked(context)
                 && isFullscreen
@@ -920,6 +931,13 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
         }
 
         isFullscreen = !isFullscreen;
+        binding.surfaceView.setUserScale(1.0f);
+        if (isFullscreen && isVerticalVideo) {
+            // Crop vertical videos so that there are no black bars in fullscreen mode
+            setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+        } else if (!isFullscreen) {
+            setResizeMode(PlayerHelper.retrieveResizeModeFromPrefs(player));
+        }
         if (isFullscreen) {
             // Android needs tens milliseconds to send new insets but a user is able to see
             // how controls changes it's position from `0` to `nav bar height` padding.

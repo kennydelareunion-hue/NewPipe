@@ -252,7 +252,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         @ColorInt final int selectedColor = ThemeHelper.resolveColorFromAttr(
                 requireContext(), android.R.attr.colorAccent);
         @ColorInt final int unselectedColor = ColorUtils.setAlphaComponent(
-                ThemeHelper.resolveColorFromAttr(requireContext(), R.attr.actionColor), 0x99);
+                ThemeHelper.resolveColorFromAttr(requireContext(), R.attr.actionColor), 0xB3);
 
         final ColorStateList tabTint = new ColorStateList(
                 new int[][] {new int[] {android.R.attr.state_selected}, new int[] {}},
