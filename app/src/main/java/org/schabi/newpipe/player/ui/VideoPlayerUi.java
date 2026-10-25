@@ -32,6 +32,8 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -145,6 +147,11 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
     private GestureDetector gestureDetector;
     private BasePlayerGestureListener playerGestureListener;
     @Nullable
+    private ScaleGestureDetector scaleGestureDetector;
+    private boolean isPinchZooming = false;
+    private float lastPinchFocusX = 0.0f;
+    private float lastPinchFocusY = 0.0f;
+    @Nullable
     private View.OnLayoutChangeListener onLayoutChangeListener = null;
 
     @NonNull
@@ -219,6 +226,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
 
         playerGestureListener = buildGestureListener();
         gestureDetector = new GestureDetector(context, playerGestureListener);
+        scaleGestureDetector = new ScaleGestureDetector(context, new PlayerScaleGestureListener());
         binding.getRoot().setOnTouchListener(playerGestureListener);
 
         binding.repeatButton.setOnClickListener(v -> onRepeatClicked());
@@ -296,6 +304,8 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
         binding.getRoot().setOnTouchListener(null);
         playerGestureListener = null;
         gestureDetector = null;
+        scaleGestureDetector = null;
+        isPinchZooming = false;
 
         binding.repeatButton.setOnClickListener(null);
         binding.shuffleButton.setOnClickListener(null);
@@ -319,6 +329,131 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
 
         binding.playbackControlRoot.removeOnLayoutChangeListener(onLayoutChangeListener);
     }
+
+
+    /*//////////////////////////////////////////////////////////////////////////
+    // Pinch-to-zoom
+    //////////////////////////////////////////////////////////////////////////*/
+    //region Pinch-to-zoom
+
+    /**
+     * Routes a touch event to the pinch-to-zoom detector.
+     *
+     * <p>This is called by the gesture listener before the ordinary player gestures. When the
+     * returned value is {@code true}, the event belongs to a pinch gesture and must not be
+     * interpreted as a volume or brightness swipe or as a double tap.</p>
+     *
+     * @param event the touch event received by the player root view
+     * @return whether the event was consumed by the pinch-to-zoom gesture
+     */
+    public boolean onTouchEvent(@NonNull final MotionEvent event) {
+        if (scaleGestureDetector == null) {
+            return false;
+        }
+        if (!canZoom()) {
+            isPinchZooming = false;
+            return false;
+        }
+
+        scaleGestureDetector.onTouchEvent(event);
+        final int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            isPinchZooming = false;
+        }
+        return isPinchZooming || event.getPointerCount() >= 2;
+    }
+
+    /**
+     * @return whether a pinch-to-zoom gesture is currently in progress
+     */
+    public boolean isPinchZooming() {
+        return isPinchZooming;
+    }
+
+    /**
+     * Toggles between the normal scale and the 2x zoom triggered by a long press.
+     *
+     * @param focusX horizontal focus coordinate in root view coordinates
+     * @param focusY vertical focus coordinate in root view coordinates
+     */
+    protected void toggleZoom(final float focusX, final float focusY) {
+        if (!canZoom()) {
+            return;
+        }
+        if (binding.surfaceView.getScale() > PlayerHelper.MIN_ZOOM_SCALE) {
+            binding.surfaceView.resetScale();
+        } else {
+            final float[] surfaceFocus = toSurfaceCoordinates(focusX, focusY);
+            binding.surfaceView.setScale(PlayerHelper.LONG_PRESS_ZOOM_SCALE,
+                    surfaceFocus[0], surfaceFocus[1]);
+        }
+    }
+
+    /**
+     * Resets any zoom applied to the video surface.
+     */
+    public void resetZoom() {
+        isPinchZooming = false;
+        binding.surfaceView.resetScale();
+    }
+
+    protected boolean canZoom() {
+        return isFullscreen()
+                && binding.surfaceView.getVisibility() == View.VISIBLE
+                && binding.surfaceView.getWidth() > 0
+                && binding.surfaceView.getHeight() > 0;
+    }
+
+    private float[] toSurfaceCoordinates(final float x, final float y) {
+        return new float[]{x - binding.surfaceView.getLeft(),
+                y - binding.surfaceView.getTop()};
+    }
+
+    private final class PlayerScaleGestureListener
+            extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        @Override
+        public boolean onScaleBegin(@NonNull final ScaleGestureDetector detector) {
+            if (!canZoom()) {
+                return false;
+            }
+            isPinchZooming = true;
+            lastPinchFocusX = detector.getFocusX();
+            lastPinchFocusY = detector.getFocusY();
+            if (playerGestureListener != null) {
+                playerGestureListener.endMultiDoubleTap();
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onScale(@NonNull final ScaleGestureDetector detector) {
+            if (!isPinchZooming) {
+                return false;
+            }
+
+            final float focusX = detector.getFocusX();
+            final float focusY = detector.getFocusY();
+            binding.surfaceView.panBy(focusX - lastPinchFocusX, focusY - lastPinchFocusY);
+            lastPinchFocusX = focusX;
+            lastPinchFocusY = focusY;
+
+            final float currentScale = binding.surfaceView.getScale();
+            final float newScale = PlayerHelper.clampZoomScale(
+                    currentScale * detector.getScaleFactor());
+            final float[] surfaceFocus = toSurfaceCoordinates(focusX, focusY);
+            binding.surfaceView.setScale(newScale, surfaceFocus[0], surfaceFocus[1]);
+            return true;
+        }
+
+        @Override
+        public void onScaleEnd(@NonNull final ScaleGestureDetector detector) {
+            isPinchZooming = false;
+            if (binding.surfaceView.getScale() <= PlayerHelper.MIN_ZOOM_SCALE) {
+                binding.surfaceView.resetScale();
+            }
+        }
+    }
+    //endregion
 
     /**
      * Initializes the Fast-For/Backward overlay.
@@ -425,6 +560,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
     @Override
     public void destroy() {
         super.destroy();
+        resetZoom();
         binding.endScreen.setImageDrawable(null);
         deinitPlayerSeekOverlay();
         deinitListeners();

@@ -2,4 +2,12 @@
 <resources>
     <color name="contrastColor">@color/white</color>
     <color name="defaultIconTint">@color/white</color>
+
+    <!-- YouTube semantic tokens, dark values (applied to the dark and black themes,
+         which both force MODE_NIGHT_YES via ThemeHelper). -->
+    <color name="surface_color">#0F0F0F</color>
+    <color name="on_surface_color">#F1F1F1</color>
+    <color name="on_surface_variant_color">#AAAAAA</color>
+    <color name="outline_color">#303030</color>
+    <color name="pill_background_color">#272727</color>
 </resources>

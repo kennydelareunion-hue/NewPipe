@@ -1,16 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- YouTube -->
+    <!-- YouTube
+         colorPrimaryDark is aligned with the app bar background (white / #0F0F0F / #000000)
+         like the YouTube app: the status bar matches the toolbar in every theme variant.
+         The primary trio is declared explicitly so the YouTube look cannot drift
+         when the base themes change. -->
     <style name="LightTheme.YouTube" parent="LightTheme" tools:keep="@style/LightTheme_YouTube">
+        <item name="colorPrimary">@color/light_youtube_primary_color</item>
         <item name="colorPrimaryDark">@color/light_toolbar_background_color</item>
+        <item name="colorAccent">@color/light_youtube_accent_color</item>
     </style>
 
     <style name="DarkTheme.YouTube" parent="DarkTheme" tools:keep="@style/DarkTheme_YouTube">
+        <item name="colorPrimary">@color/dark_youtube_primary_color</item>
         <item name="colorPrimaryDark">@color/dark_toolbar_background_color</item>
+        <item name="colorAccent">@color/dark_youtube_accent_color</item>
     </style>
 
     <style name="BlackTheme.YouTube" parent="BlackTheme" tools:keep="@style/BlackTheme_YouTube">
+        <item name="colorPrimary">@color/dark_youtube_primary_color</item>
         <item name="colorPrimaryDark">@color/black_toolbar_background_color</item>
+        <item name="colorAccent">@color/dark_youtube_accent_color</item>
     </style>
 
     <!-- SoundCloud -->

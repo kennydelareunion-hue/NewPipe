@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +39,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -90,6 +94,8 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
     private boolean isFullscreen = false;
     private boolean isVerticalVideo = false;
     private boolean fragmentIsVisible = false;
+    private int resizeModeBeforeFullscreen = -1;
+    private boolean resizeModeAutoChangedForFullscreen = false;
 
     private ContentObserver settingsContentObserver;
 
@@ -156,9 +162,12 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
         super.initListeners();
 
         binding.screenRotationButton.setOnClickListener(makeOnClickListener(() -> {
-            // Only if it's not a vertical video or vertical video but in landscape with locked
-            // orientation a screen orientation can be changed automatically
-            if (!isVerticalVideo || (isLandscape() && globalScreenOrientationLocked(context))) {
+            if (isFullscreen) {
+                exitFullscreen();
+            } else if (!isVerticalVideo
+                    || (isLandscape() && globalScreenOrientationLocked(context))) {
+                // Only if it's not a vertical video or vertical video but in landscape with
+                // locked orientation a screen orientation can be changed automatically
                 player.getFragmentListener()
                         .ifPresent(PlayerServiceEventListener::onScreenRotationButtonClicked);
             } else {
@@ -264,8 +273,10 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
     }
 
     private void initVideoPlayer() {
-        // restore last resize mode
-        setResizeMode(PlayerHelper.retrieveResizeModeFromPrefs(player));
+        // restore last resize mode, promoting FIT to FILL when already in fullscreen
+        final int resizeMode = PlayerHelper.retrieveResizeModeFromPrefs(player);
+        setResizeMode(isFullscreen
+                ? PlayerHelper.resolveResizeModeForFullscreen(resizeMode) : resizeMode);
         binding.getRoot().setLayoutParams(new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
     }
 
@@ -458,10 +469,13 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
             getParentActivity().map(Activity::getWindow).ifPresent(window -> {
                 window.setStatusBarColor(Color.TRANSPARENT);
                 window.setNavigationBarColor(Color.TRANSPARENT);
-                final int visibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
-                window.getDecorView().setSystemUiVisibility(visibility);
+                final WindowInsetsControllerCompat insetsController =
+                        WindowCompat.getInsetsController(window, window.getDecorView());
+                insetsController.setSystemBarsBehavior(
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                insetsController.setAppearanceLightStatusBars(false);
+                insetsController.setAppearanceLightNavigationBars(false);
+                insetsController.show(WindowInsetsCompat.Type.systemBars());
                 window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             });
         }
@@ -883,9 +897,15 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
     //region Video size, orientation, fullscreen
 
     private void setupScreenRotationButton() {
-        binding.screenRotationButton.setVisibility(globalScreenOrientationLocked(context)
-                || isVerticalVideo || DeviceUtils.isTablet(context)
-                ? View.VISIBLE : View.GONE);
+        // In fullscreen the button is always shown so that the user always has an explicit way
+        // to leave fullscreen, even on phones with unlocked rotation and horizontal videos.
+        final boolean showButton = isFullscreen
+                || globalScreenOrientationLocked(context)
+                || isVerticalVideo
+                || DeviceUtils.isTablet(context);
+        binding.screenRotationButton.setVisibility(showButton ? View.VISIBLE : View.GONE);
+        binding.screenRotationButton.setContentDescription(context.getString(isFullscreen
+                ? R.string.toggle_fullscreen : R.string.toggle_screen_orientation));
         binding.screenRotationButton.setImageDrawable(AppCompatResources.getDrawable(context,
                 isFullscreen ? R.drawable.ic_fullscreen_exit
                         : R.drawable.ic_fullscreen));
@@ -921,11 +941,13 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
 
         isFullscreen = !isFullscreen;
         if (isFullscreen) {
+            applyResizeModeForFullscreen();
             // Android needs tens milliseconds to send new insets but a user is able to see
             // how controls changes it's position from `0` to `nav bar height` padding.
             // So just hide the controls to hide this visual inconsistency
             hideControls(0, 0);
         } else {
+            restoreResizeModeAfterFullscreen();
             // Apply window insets because Android will not do it when orientation changes
             // from landscape to portrait (open vertical video to reproduce)
             binding.playbackControlRoot.setPadding(0, 0, 0, 0);
@@ -935,6 +957,66 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
         binding.metadataView.setVisibility(isFullscreen ? View.VISIBLE : View.GONE);
         binding.playerCloseButton.setVisibility(isFullscreen ? View.GONE : View.VISIBLE);
         setupScreenRotationButton();
+    }
+
+    private void applyResizeModeForFullscreen() {
+        final int currentResizeMode = binding.surfaceView.getResizeMode();
+        resizeModeBeforeFullscreen = currentResizeMode;
+        final int fullscreenResizeMode =
+                PlayerHelper.resolveResizeModeForFullscreen(currentResizeMode);
+        resizeModeAutoChangedForFullscreen = fullscreenResizeMode != currentResizeMode;
+        if (resizeModeAutoChangedForFullscreen) {
+            setResizeMode(fullscreenResizeMode);
+        }
+    }
+
+    private void restoreResizeModeAfterFullscreen() {
+        resetZoom();
+        if (resizeModeAutoChangedForFullscreen && resizeModeBeforeFullscreen >= 0) {
+            setResizeMode(resizeModeBeforeFullscreen);
+        }
+        resizeModeAutoChangedForFullscreen = false;
+        resizeModeBeforeFullscreen = -1;
+    }
+
+    /**
+     * Leaves fullscreen without pausing playback, restoring the orientation on phones.
+     */
+    public void exitFullscreen() {
+        if (!isFullscreen) {
+            return;
+        }
+        if (!isLandscape() || DeviceUtils.isTablet(context)) {
+            toggleFullscreen();
+        } else if (player.getFragmentListener().isPresent()) {
+            player.getFragmentListener()
+                    .ifPresent(PlayerServiceEventListener::onScreenRotationButtonClicked);
+        } else {
+            toggleFullscreen();
+        }
+    }
+
+    /**
+     * Toggles the 2x zoom when the user long-presses the video in fullscreen.
+     *
+     * @param focusX horizontal focus coordinate in root view coordinates
+     * @param focusY vertical focus coordinate in root view coordinates
+     * @return whether the long press was handled
+     */
+    public boolean onLongPressZoom(final float focusX, final float focusY) {
+        if (!isFullscreen || !canZoom()) {
+            return false;
+        }
+        toggleZoom(focusX, focusY);
+        binding.getRoot().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        return true;
+    }
+
+    @Override
+    void onResizeClicked() {
+        // Keep the mode the user explicitly selected in fullscreen when leaving it.
+        resizeModeAutoChangedForFullscreen = false;
+        super.onResizeClicked();
     }
 
     public void checkLandscape() {

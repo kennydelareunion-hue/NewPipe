@@ -4,7 +4,10 @@
     <color name="light_youtube_primary_color">#FF0000</color>
     <color name="light_youtube_accent_color">#FF0000</color>
 
-    <color name="dark_youtube_primary_color">#FF0000</color>
+    <!-- Dark theme primary: softened YouTube red. Pure #FF0000 regressed the dark theme
+         (harsh on #0F0F0F surfaces); #E53935 keeps the brand feel with a 4.0:1 contrast
+         ratio on the dark background and matches live_duration_background_color. -->
+    <color name="dark_youtube_primary_color">#E53935</color>
     <color name="dark_youtube_accent_color">#FF0000</color>
 
     <!-- SoundCloud -->

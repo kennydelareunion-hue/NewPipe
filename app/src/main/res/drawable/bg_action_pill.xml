@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- YouTube action pill: 20dp rounded corners, semantic background color
+     (#F2F2F2 light / #272727 dark & black) with a ripple clipped to the shape. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <solid android:color="@color/pill_background_color" />
+        </shape>
+    </item>
+
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <solid android:color="@color/white" />
+        </shape>
+    </item>
+</ripple>

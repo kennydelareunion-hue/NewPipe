@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Toolbar search pill: 24dp rounded corners (capsule on the 40dp tall pill),
+     semantic background color (#F2F2F2 light / #272727 dark & black). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="24dp" />
+    <solid android:color="@color/pill_background_color" />
+</shape>

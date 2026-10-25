@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Subscribe button pill: 20dp rounded corners filled with the "on surface" color
+     (black pill in light theme, white pill in dark/black theme, like YouTube),
+     to be paired with text colored @color/surface_color. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="20dp" />
+    <solid android:color="@color/on_surface_color" />
+</shape>

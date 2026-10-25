@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Duration badge: 4dp rounded corners (YouTube style).
+     Note: StreamMiniInfoItemHolder still calls setBackgroundColor() at runtime, which
+     flattens these corners in stream lists; wiring mod-android to use
+     setBackgroundResource(R.drawable.bg_duration_badge) will restore them. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="4dp" />
+    <solid android:color="@color/duration_background_color" />
+</shape>

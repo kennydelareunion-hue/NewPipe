@@ -57,6 +57,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public final class PlayerHelper {
+    /**
+     * Minimum pinch-to-zoom scale of the main player.
+     */
+    public static final float MIN_ZOOM_SCALE = 1.0f;
+
+    /**
+     * Maximum pinch-to-zoom scale of the main player.
+     */
+    public static final float MAX_ZOOM_SCALE = 3.0f;
+
+    /**
+     * Scale used when the user long-presses the video to toggle the 2x zoom.
+     */
+    public static final float LONG_PRESS_ZOOM_SCALE = 2.0f;
+
     private static final FormattersProvider FORMATTERS_PROVIDER = new FormattersProvider();
 
     @Retention(SOURCE)
@@ -411,6 +426,33 @@ public final class PlayerHelper {
     public static int retrieveResizeModeFromPrefs(final Player player) {
         return player.getPrefs().getInt(player.getContext().getString(R.string.last_resize_mode),
                 AspectRatioFrameLayout.RESIZE_MODE_FIT);
+    }
+
+    /**
+     * Resolves the resize mode to use in fullscreen.
+     *
+     * <p>FIT is the default mode and letterboxes videos. In fullscreen this method promotes it
+     * to FILL, so that the video covers the whole screen and the pinch-to-zoom gesture starts
+     * without black bars. Explicit FILL and ZOOM choices are kept unchanged.</p>
+     *
+     * @param resizeMode the current resize mode
+     * @return the resize mode that avoids letterboxing in fullscreen
+     */
+    @ResizeMode
+    public static int resolveResizeModeForFullscreen(@ResizeMode final int resizeMode) {
+        return resizeMode == AspectRatioFrameLayout.RESIZE_MODE_FIT
+                ? AspectRatioFrameLayout.RESIZE_MODE_FILL
+                : resizeMode;
+    }
+
+    /**
+     * Continuously clamps a pinch-to-zoom scale to the supported range.
+     *
+     * @param scale the raw scale computed from the pinch gesture
+     * @return a scale between {@link #MIN_ZOOM_SCALE} and {@link #MAX_ZOOM_SCALE}
+     */
+    public static float clampZoomScale(final float scale) {
+        return Math.max(MIN_ZOOM_SCALE, Math.min(MAX_ZOOM_SCALE, scale));
     }
 
     @SuppressLint("SwitchIntDef") // only fit, fill and zoom are supported by NewPipe

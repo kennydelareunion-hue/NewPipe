@@ -10,12 +10,18 @@ import static com.google.android.exoplayer2.ui.AspectRatioFrameLayout.RESIZE_MOD
 import static com.google.android.exoplayer2.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM;
 
 public class ExpandableSurfaceView extends SurfaceView {
+    private static final float MIN_USER_SCALE = 1.0f;
+    private static final float MAX_USER_SCALE = 3.0f;
+
     private int resizeMode = RESIZE_MODE_FIT;
     private int baseHeight = 0;
     private int maxHeight = 0;
     private float videoAspectRatio = 0.0f;
     private float scaleX = 1.0f;
     private float scaleY = 1.0f;
+    private float userScale = 1.0f;
+    private float userTranslationX = 0.0f;
+    private float userTranslationY = 0.0f;
 
     public ExpandableSurfaceView(final Context context, final AttributeSet attrs) {
         super(context, attrs);
@@ -64,12 +70,125 @@ public class ExpandableSurfaceView extends SurfaceView {
 
     /**
      * Scale view only in {@link #onLayout} to make transition for ZOOM mode as smooth as possible.
+     * The user scale applied by pinch-to-zoom is combined with the base scale of the resize mode.
      */
     @Override
     protected void onLayout(final boolean changed,
                             final int left, final int top, final int right, final int bottom) {
-        setScaleX(scaleX);
-        setScaleY(scaleY);
+        applyTransform();
+    }
+
+    private void applyTransform() {
+        clampTranslation();
+        setScaleX(scaleX * userScale);
+        setScaleY(scaleY * userScale);
+        setTranslationX(userTranslationX);
+        setTranslationY(userTranslationY);
+    }
+
+    private void clampTranslation() {
+        final float width = getWidth();
+        final float height = getHeight();
+        if (width <= 0 || height <= 0 || userScale <= MIN_USER_SCALE) {
+            userTranslationX = 0.0f;
+            userTranslationY = 0.0f;
+            return;
+        }
+
+        final float maxTranslationX = (scaleX * userScale - 1.0f) * width / 2.0f;
+        final float maxTranslationY = (scaleY * userScale - 1.0f) * height / 2.0f;
+        userTranslationX = Math.max(-maxTranslationX, Math.min(maxTranslationX,
+                userTranslationX));
+        userTranslationY = Math.max(-maxTranslationY, Math.min(maxTranslationY,
+                userTranslationY));
+    }
+
+    /**
+     * @return the current user zoom scale, always between 1 and 3
+     */
+    public float getScale() {
+        return userScale;
+    }
+
+    /**
+     * Applies a zoom centered on the view.
+     *
+     * @param newScale the requested user scale
+     */
+    public void setScale(final float newScale) {
+        setScale(newScale, getWidth() / 2.0f, getHeight() / 2.0f);
+    }
+
+    /**
+     * Applies a continuous zoom while keeping the content below the focus point in place.
+     *
+     * @param newScale the requested user scale
+     * @param focusX   horizontal focus coordinate in view coordinates
+     * @param focusY   vertical focus coordinate in view coordinates
+     */
+    public void setScale(final float newScale, final float focusX, final float focusY) {
+        final float clampedScale = Math.max(MIN_USER_SCALE, Math.min(MAX_USER_SCALE, newScale));
+        if (clampedScale == userScale) {
+            return;
+        }
+
+        final float width = getWidth();
+        final float height = getHeight();
+        if (width <= 0 || height <= 0) {
+            userScale = clampedScale;
+            applyTransform();
+            return;
+        }
+
+        final float centerX = width / 2.0f;
+        final float centerY = height / 2.0f;
+        final float scaleRatio = clampedScale / userScale;
+        userTranslationX = focusX - centerX
+                - (focusX - centerX - userTranslationX) * scaleRatio;
+        userTranslationY = focusY - centerY
+                - (focusY - centerY - userTranslationY) * scaleRatio;
+        userScale = clampedScale;
+        applyTransform();
+    }
+
+    /**
+     * Moves the zoomed content, keeping it inside the view bounds.
+     *
+     * @param deltaX horizontal translation in pixels
+     * @param deltaY vertical translation in pixels
+     */
+    public void setTranslation(final float deltaX, final float deltaY) {
+        if (userScale <= MIN_USER_SCALE) {
+            return;
+        }
+        userTranslationX = deltaX;
+        userTranslationY = deltaY;
+        applyTransform();
+    }
+
+    /**
+     * Translates the zoomed content by the given deltas.
+     *
+     * @param deltaX horizontal translation in pixels
+     * @param deltaY vertical translation in pixels
+     */
+    public void panBy(final float deltaX, final float deltaY) {
+        if (userScale <= MIN_USER_SCALE) {
+            return;
+        }
+        userTranslationX += deltaX;
+        userTranslationY += deltaY;
+        applyTransform();
+    }
+
+    /**
+     * Restores the original, unzoomed content.
+     */
+    public void resetScale() {
+        userScale = MIN_USER_SCALE;
+        userTranslationX = 0.0f;
+        userTranslationY = 0.0f;
+        applyTransform();
     }
 
     /**

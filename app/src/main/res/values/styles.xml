@@ -18,6 +18,47 @@
         <item name="android:textAllCaps">false</item>
     </style>
 
+    <!-- YouTube centralized styles.
+         Explicit parents are mandatory here: the dotted names would otherwise imply
+         non-existent implicit parents (TextAppearance.YouTube / Widget.YouTube). -->
+
+    <!-- Video title: 16sp medium, primary color (YouTube feed & search results). -->
+    <style name="TextAppearance.YouTube.VideoTitle" parent="TextAppearance.AppCompat.Body1">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:lineSpacingMultiplier">1.2</item>
+    </style>
+
+    <!-- Video metadata line: fixed gray (semantic token), adapts to light/dark/black. -->
+    <style name="TextAppearance.YouTube.VideoMetadata" parent="TextAppearance.AppCompat.Caption">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/on_surface_variant_color</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Thumbnail shape: 12dp rounded corners, applied to ShapeableImageView. -->
+    <style name="ShapeAppearance.YouTube.Thumbnail" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
+    <style name="Widget.YouTube.Thumbnail" parent="">
+        <item name="shapeAppearance">@style/ShapeAppearance.YouTube.Thumbnail</item>
+    </style>
+
+    <!-- Action pill: 20dp rounded corners with ripple (video detail action row). -->
+    <style name="Widget.YouTube.Pill" parent="">
+        <item name="android:background">@drawable/bg_action_pill</item>
+    </style>
+
+    <!-- Search pill: 24dp rounded corners (toolbar search field). -->
+    <style name="Widget.YouTube.SearchPill" parent="Widget.YouTube.Pill">
+        <item name="android:background">@drawable/bg_search_pill</item>
+    </style>
+
     <!-- Base Theme -->
     <style name="Base.V21" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="actionColor">@color/white</item>

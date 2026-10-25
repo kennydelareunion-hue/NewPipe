@@ -10,6 +10,15 @@
     <color name="dark_toolbar_background_color">#0F0F0F</color>
     <color name="black_toolbar_background_color">#000000</color>
 
+    <!-- YouTube semantic tokens (light values; dark values live in values-night/colors.xml).
+         They adapt automatically to the light/dark/black themes because ThemeHelper forces
+         the matching day/night mode for the selected theme. -->
+    <color name="surface_color">#FFFFFF</color>
+    <color name="on_surface_color">#0F0F0F</color>
+    <color name="on_surface_variant_color">#606060</color>
+    <color name="outline_color">#E5E5E5</color>
+    <color name="pill_background_color">#F2F2F2</color>
+
     <color name="placeholder_background">#999999</color>
     <color name="placeholder_foreground">#6C6C6C</color>
 
@@ -57,7 +66,8 @@
     <color name="queue_background_color">@color/dark_queue_background_color</color>
     <color name="drawer_header_font_color">#F2FFFFFF</color>
     <color name="duration_background_color">#aa000000</color>
-    <color name="live_duration_background_color">#c8E53935</color>
+    <!-- Opaque YouTube red, consistent with the other badge backgrounds (duration, playlist count). -->
+    <color name="live_duration_background_color">#E53935</color>
     <color name="playlist_stream_count_background_color">#e6000000</color>
     <color name="duration_text_color">#EEFFFFFF</color>
     <color name="video_overlay_color">#64000000</color>

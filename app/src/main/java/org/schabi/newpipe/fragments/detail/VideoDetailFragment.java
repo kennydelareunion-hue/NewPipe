@@ -38,6 +38,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
@@ -53,6 +54,9 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 
@@ -707,11 +711,9 @@ public final class VideoDetailFragment
             Log.d(TAG, "onBackPressed() called");
         }
 
-        // If we are in fullscreen mode just exit from it via first back press
+        // If we are in fullscreen mode, exit from it via the first back press without
+        // interrupting playback.
         if (isFullscreen()) {
-            if (!DeviceUtils.isTablet(activity)) {
-                player.pause();
-            }
             restoreDefaultOrientation();
             setAutoPlay(false);
             return true;
@@ -1469,17 +1471,25 @@ public final class VideoDetailFragment
     // Orientation listener
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * Exits fullscreen and restores the default orientation, without pausing playback.
+     *
+     * <p>When the player was in fullscreen, portrait is requested explicitly so that a phone
+     * held in landscape does not immediately enter fullscreen again on the next player
+     * connection. Playback is never paused here.</p>
+     */
     private void restoreDefaultOrientation() {
+        final boolean wasFullscreen = isFullscreen();
         if (isPlayerAvailable() && player.videoPlayerSelected()) {
             toggleFullscreenIfInFullscreenMode();
         }
 
-        // This will show systemUI and pause the player.
-        // User can tap on Play button and video will be in fullscreen mode again
         // Note for tablet: trying to avoid orientation changes since it's not easy
         // to physically rotate the tablet every time
         if (activity != null && !DeviceUtils.isTablet(activity)) {
-            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+            activity.setRequestedOrientation(wasFullscreen
+                    ? ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    : ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
 
@@ -1993,18 +2003,24 @@ public final class VideoDetailFragment
             return;
         }
 
+        final Window window = activity.getWindow();
         // Prevent jumping of the player on devices with cutout
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            activity.getWindow().getAttributes().layoutInDisplayCutoutMode =
+            window.getAttributes().layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
         }
-        int systemUiVisibility = 0;
-        if (ThemeHelper.isLightThemeSelected(requireContext())) {
-            systemUiVisibility |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-        }
-        activity.getWindow().getDecorView().setSystemUiVisibility(systemUiVisibility);
-        activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        activity.getWindow().setStatusBarColor(ThemeHelper.resolveColorFromAttr(
+
+        final WindowInsetsControllerCompat insetsController =
+                WindowCompat.getInsetsController(window, window.getDecorView());
+        insetsController.show(WindowInsetsCompat.Type.systemBars());
+        insetsController.setSystemBarsBehavior(
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        final boolean lightTheme = ThemeHelper.isLightThemeSelected(requireContext());
+        insetsController.setAppearanceLightStatusBars(lightTheme);
+        insetsController.setAppearanceLightNavigationBars(false);
+
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        window.setStatusBarColor(ThemeHelper.resolveColorFromAttr(
                 requireContext(), R.attr.toolbarBackgroundColor));
     }
 
@@ -2017,30 +2033,33 @@ public final class VideoDetailFragment
             return;
         }
 
+        final Window window = activity.getWindow();
         // Prevent jumping of the player on devices with cutout
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            activity.getWindow().getAttributes().layoutInDisplayCutoutMode =
+            window.getAttributes().layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
-        int visibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
 
-        // In multiWindow mode status bar is not transparent for devices with cutout
-        // if I include this flag. So without it is better in this case
+        final WindowInsetsControllerCompat insetsController =
+                WindowCompat.getInsetsController(window, window.getDecorView());
+        insetsController.setSystemBarsBehavior(
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        insetsController.setAppearanceLightStatusBars(false);
+        insetsController.setAppearanceLightNavigationBars(false);
+
+        // In multiWindow mode status bar is not transparent for devices with cutout, so keep it
+        // visible there and only hide the navigation bar.
         final boolean isInMultiWindow = DeviceUtils.isInMultiWindow(activity);
-        if (!isInMultiWindow) {
-            visibility |= View.SYSTEM_UI_FLAG_FULLSCREEN;
-        }
-        activity.getWindow().getDecorView().setSystemUiVisibility(visibility);
+        final int barsToHide = isInMultiWindow
+                ? WindowInsetsCompat.Type.navigationBars()
+                : WindowInsetsCompat.Type.systemBars();
+        insetsController.hide(barsToHide);
 
         if (isInMultiWindow || isFullscreen()) {
-            activity.getWindow().setStatusBarColor(Color.TRANSPARENT);
-            activity.getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            window.setStatusBarColor(Color.TRANSPARENT);
+            window.setNavigationBarColor(Color.TRANSPARENT);
         }
-        activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
     // Listener implementation

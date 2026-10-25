@@ -3,7 +3,9 @@
 
     <!-- Opening Theme -->
     <style name="Base.OpeningTheme" parent="Base.V21.OpeningTheme">
-        <item name="android:navigationBarColor">@color/dark_youtube_primary_color</item>
+        <!-- Dark splash: navigation bar must match the dark splash background (#0F0F0F),
+             not the brand red. -->
+        <item name="android:navigationBarColor">@color/dark_toolbar_background_color</item>
     </style>
 
 </resources>

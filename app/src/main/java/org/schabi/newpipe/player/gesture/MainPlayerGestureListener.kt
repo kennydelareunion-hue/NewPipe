@@ -17,6 +17,7 @@ import org.schabi.newpipe.player.Player
 import org.schabi.newpipe.player.helper.AudioReactor
 import org.schabi.newpipe.player.helper.PlayerHelper
 import org.schabi.newpipe.player.ui.MainPlayerUi
+import org.schabi.newpipe.util.DeviceUtils
 import org.schabi.newpipe.util.ThemeHelper.getAndroidDimenPx
 
 /**
@@ -30,25 +31,61 @@ class MainPlayerGestureListener(
     private val playerUi: MainPlayerUi
 ) : BasePlayerGestureListener(playerUi), OnTouchListener {
     private var isMoving = false
+    private var isSwipingDown = false
+    private var ignoreSingleFingerUntilUp = false
 
     override fun onTouch(v: View, event: MotionEvent): Boolean {
-        super.onTouch(v, event)
-        if (event.action == MotionEvent.ACTION_UP && isMoving) {
-            isMoving = false
-            onScrollEnd(event)
+        // Feed the pinch-to-zoom detector first. When it consumes the event, the other gestures
+        // (volume/brightness swipe, double tap) must not react to it as well.
+        val zoomHandled = playerUi.onTouchEvent(event)
+
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                isSwipingDown = false
+                ignoreSingleFingerUntilUp = false
+            }
+
+            MotionEvent.ACTION_POINTER_DOWN, MotionEvent.ACTION_MOVE -> {
+                if (event.pointerCount >= 2) {
+                    ignoreSingleFingerUntilUp = true
+                }
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (isMoving) {
+                    isMoving = false
+                    onScrollEnd(event)
+                }
+                isSwipingDown = false
+                ignoreSingleFingerUntilUp = false
+            }
         }
-        return when (event.action) {
+
+        // Don't resume the single-finger gesture detector after a pinch: it would interpret the
+        // remaining finger as a volume or brightness swipe from the original ACTION_DOWN.
+        val eatSingleFinger = ignoreSingleFingerUntilUp && event.pointerCount == 1
+        if (!zoomHandled && !eatSingleFinger) {
+            super.onTouch(v, event)
+        }
+
+        return when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                 v.parent?.requestDisallowInterceptTouchEvent(playerUi.isFullscreen)
                 true
             }
 
-            MotionEvent.ACTION_UP -> {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 v.parent?.requestDisallowInterceptTouchEvent(false)
                 false
             }
 
             else -> true
+        }
+    }
+
+    override fun onLongPress(e: MotionEvent) {
+        if (playerUi.isFullscreen && !playerUi.isPinchZooming) {
+            playerUi.onLongPressZoom(e.x, e.y)
         }
     }
 
@@ -174,6 +211,17 @@ class MainPlayerGestureListener(
             return false
         }
 
+        // A pinch gesture owns the touch stream: don't turn it into a volume/brightness swipe.
+        if (playerUi.isPinchZooming) {
+            return true
+        }
+
+        // A swipe down starting from the top area leaves fullscreen. Starting from the top avoids
+        // conflicting with the volume/brightness swipes available on the rest of the player.
+        if (isSwipingDown || isSwipeDownToExit(initialEvent, movingEvent, distanceX, distanceY)) {
+            return true
+        }
+
         // Calculate heights of status and navigation bars
         val statusBarHeight = getAndroidDimenPx(player.context, "status_bar_height")
         val navigationBarHeight = getAndroidDimenPx(player.context, "navigation_bar_height")
@@ -217,6 +265,31 @@ class MainPlayerGestureListener(
         return true
     }
 
+    private fun isSwipeDownToExit(
+        initialEvent: MotionEvent,
+        movingEvent: MotionEvent,
+        distanceX: Float,
+        distanceY: Float
+    ): Boolean {
+        val rootHeight = binding.root.height
+        if (rootHeight == 0 || !playerUi.isFullscreen) {
+            return false
+        }
+
+        val startedInTopArea = initialEvent.y < rootHeight * SWIPE_DOWN_START_AREA
+        val threshold = DeviceUtils.dpToPx(SWIPE_DOWN_THRESHOLD_DP, player.context)
+        val swipedDownEnough = distanceY > threshold
+        val isMostlyVertical = abs(distanceY) > abs(distanceX) * SWIPE_DOWN_SLOPE
+        if (!startedInTopArea || !swipedDownEnough || !isMostlyVertical) {
+            return false
+        }
+
+        isSwipingDown = true
+        isMoving = true
+        playerUi.exitFullscreen()
+        return true
+    }
+
     override fun getDisplayPortion(e: MotionEvent): DisplayPortion {
         return when {
             e.x < binding.root.width / 3.0 -> DisplayPortion.LEFT
@@ -236,5 +309,8 @@ class MainPlayerGestureListener(
         private val TAG = MainPlayerGestureListener::class.java.simpleName
         private val DEBUG = MainActivity.DEBUG
         private const val MOVEMENT_THRESHOLD = 40
+        private const val SWIPE_DOWN_START_AREA = 0.35f
+        private const val SWIPE_DOWN_THRESHOLD_DP = 72
+        private const val SWIPE_DOWN_SLOPE = 1.5f
     }
 }
