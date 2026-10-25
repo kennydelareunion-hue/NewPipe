@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,10 +27,15 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+          gradle-home-cache-cleanup: true
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace -DskipFormatKtlint
+        run: ./gradlew assembleDebug --build-cache --stacktrace -DskipFormatKtlint
 
       - name: Show APK info
         run: |
